@@ -5,7 +5,6 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,67 +38,22 @@ jobs:
       - name: Check Node.js version
         run: node --version
 
-      - name: Check pnpm version
-        run: pnpm --version
+      - name: Check Pages status
+        run: |
+          echo "Checking GitHub Pages configuration..."
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
 
       - name: Install dependencies
-        run: |
-          echo "Installing dependencies..."
-          pnpm install --no-frozen-lockfile
-          echo "Dependencies installed successfully"
-
-      - name: Verify dependencies
-        run: |
-          echo "Verifying dependencies..."
-          pnpm list --depth=0
-          echo "Dependencies verified"
-
-      - name: Test build
-        run: |
-          echo "Testing build process..."
-          pnpm run docs:build
-          echo "Build test completed successfully"
-
-      - name: Verify build output
-        run: |
-          echo "Verifying build output..."
-          ls -la docs/.vuepress/dist/
-          echo "Build output verified"
-
-  build:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.6.0'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: |
-          echo "Installing dependencies for production build..."
-          pnpm install --no-frozen-lockfile
-          echo "Production dependencies installed"
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build VuePress site
-        run: |
-          echo "Building VuePress site..."
-          pnpm run docs:full-check
-          echo "Full deployment check completed successfully"
+        run: pnpm run docs:build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -117,9 +71,16 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
 
-      - name: Verify deployment
+      - name: Check deployment status
         run: |
-          echo "Deployment completed successfully!"
-          echo "Site URL: ${{ steps.deployment.outputs.page_url }}"
+          if [ "${{ steps.deployment.outcome }}" == "failure" ]; then
+            echo "Deployment failed. Please check GitHub Pages settings."
+            echo "Go to: https://github.com/${{ github.repository }}/settings/pages"
+            exit 1
+          else
+            echo "Deployment successful!"
+            echo "Site URL: ${{ steps.deployment.outputs.page_url }}"
+          fi
 

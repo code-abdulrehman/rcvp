@@ -1,160 +1,145 @@
-# Deployment Guide
+# Deployment Troubleshooting Guide
 
-This guide covers the deployment process for the React Chatbot documentation site.
+This guide helps resolve common deployment issues with GitHub Pages.
 
-## Overview
+## GitHub Pages Setup
 
-The site is deployed using GitHub Actions to GitHub Pages. The deployment process includes:
+### 1. Enable GitHub Pages
 
-- ✅ Environment checks
-- ✅ Dependency verification
-- ✅ Build process
-- ✅ Health checks
-- ✅ Automatic deployment
+1. Go to your repository: `https://github.com/code-abdulrehman/rcvp`
+2. Click on **Settings** tab
+3. Scroll down to **Pages** section in the left sidebar
+4. Under **Source**, select **GitHub Actions**
+5. Click **Save**
 
-## Deployment Process
+### 2. Repository Settings
 
-### 1. Automatic Deployment
+Make sure your repository has the following settings:
 
-The site automatically deploys when:
-- Code is pushed to the `main` branch
-- A pull request is created against `main`
-- Manual trigger via GitHub Actions
+- **Repository is public** (or you have GitHub Pro for private repos)
+- **GitHub Actions is enabled**
+- **Pages is enabled** with GitHub Actions as source
 
-### 2. Deployment Steps
+### 3. Workflow Permissions
 
-1. **Test Job**: Verifies environment and dependencies
-2. **Build Job**: Creates production build with health checks
-3. **Deploy Job**: Deploys to GitHub Pages
+The workflow needs these permissions:
 
-### 3. Health Checks
-
-The deployment includes comprehensive health checks:
-
-- ✅ Node.js version verification
-- ✅ Dependency installation
-- ✅ Build output validation
-- ✅ File size and count verification
-- ✅ Essential files presence check
-
-## Troubleshooting
-
-### Common Issues
-
-#### 1. Lockfile Mismatch
-```bash
-# Solution: Update lockfile locally
-./update-deps.sh
-git add pnpm-lock.yaml
-git commit -m "Update lockfile"
-git push origin main
+```yaml
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 ```
 
-#### 2. Build Failures
-```bash
-# Check build locally
-pnpm run docs:full-check
+## Common Issues and Solutions
 
-# Clean and rebuild
-rm -rf node_modules
-pnpm install
+### Issue 1: "Get Pages site failed"
+
+**Error**: `Error: Get Pages site failed. Please verify that the repository has Pages enabled`
+
+**Solution**:
+1. Enable GitHub Pages in repository settings
+2. Use the `enablement: true` parameter in the workflow
+3. Make sure the repository is public
+
+### Issue 2: Permission Denied
+
+**Error**: `Permission to code-abdulrehman/rcvp.git denied`
+
+**Solution**:
+1. Check repository settings → Actions → General
+2. Enable "Read and write permissions" for workflows
+3. Make sure the workflow has proper permissions
+
+### Issue 3: Lockfile Mismatch
+
+**Error**: `ERR_PNPM_OUTDATED_LOCKFILE`
+
+**Solution**:
+1. Use `--no-frozen-lockfile` in the workflow
+2. Or update lockfile locally and commit it
+
+### Issue 4: Build Failures
+
+**Error**: `crypto.hash is not a function`
+
+**Solution**:
+1. Use Node.js 20+ in the workflow
+2. Use compatible VuePress versions
+3. Clear cache and reinstall dependencies
+
+## Alternative Deployment Methods
+
+### Method 1: GitHub Actions (Recommended)
+
+Use the main workflow file: `.github/workflows/deploy.yml`
+
+### Method 2: Simple gh-pages Branch
+
+Use the alternative workflow: `.github/workflows/deploy-simple.yml`
+
+### Method 3: Manual Deployment
+
+1. Build locally: `pnpm run docs:build`
+2. Push to gh-pages branch manually
+
+## Workflow Files
+
+### Main Workflow (deploy.yml)
+- Uses official GitHub Pages Actions
+- Requires Pages to be enabled
+- More modern approach
+
+### Alternative Workflow (deploy-simple.yml)
+- Uses peaceiris/actions-gh-pages
+- Creates gh-pages branch
+- More reliable for some setups
+
+## Testing Deployment
+
+### Local Testing
+```bash
+# Build the site
 pnpm run docs:build
+
+# Preview locally
+pnpm run docs:preview
 ```
 
-#### 3. Dependency Issues
-```bash
-# Clear cache and reinstall
-pnpm store prune
-rm -rf node_modules
-pnpm install --no-frozen-lockfile
-```
-
-### Manual Deployment
-
-If automatic deployment fails, you can deploy manually:
-
-1. **Local Build**:
-   ```bash
-   pnpm run docs:full-check
-   ```
-
-2. **Manual Upload**:
-   - Go to repository Settings → Pages
-   - Upload the `docs/.vuepress/dist` folder
-
-### Fallback Deployment
-
-If the main deployment fails, a fallback workflow will:
-- Use npm instead of pnpm
-- Use Node.js 18 instead of 20
-- Attempt alternative build methods
+### CI/CD Testing
+1. Push to main branch
+2. Check Actions tab
+3. Monitor build logs
+4. Verify deployment
 
 ## Monitoring
 
 ### Check Deployment Status
+1. Go to Actions tab in your repository
+2. Look for the latest workflow run
+3. Check the build and deploy steps
+4. Look for any error messages
 
-1. **GitHub Actions Tab**: Monitor workflow runs
-2. **Pages Tab**: Check deployment status
-3. **Site URL**: Verify live site functionality
+### Check Pages Status
+1. Go to Settings → Pages
+2. Check if the site is deployed
+3. Note the site URL
+4. Check for any error messages
 
-### Logs and Debugging
+## Rollback
 
-- Check workflow logs in GitHub Actions
-- Use `pnpm run docs:deploy-check` for local verification
-- Review build output in `docs/.vuepress/dist/`
+If deployment fails:
 
-## Performance Optimization
-
-### Build Optimization
-
-- Uses pnpm for faster dependency installation
-- Implements caching for faster builds
-- Includes health checks to prevent broken deployments
-
-### Site Optimization
-
-- VuePress optimizations enabled
-- Asset compression
-- CDN delivery via GitHub Pages
-
-## Security
-
-### Environment Variables
-
-- No sensitive data in build process
-- API keys handled securely
-- Public deployment only
-
-### Dependencies
-
-- Regular dependency updates
-- Security scanning enabled
-- Locked dependency versions
+1. **Revert the commit** that caused the issue
+2. **Use a previous working version** of the workflow
+3. **Check the logs** for specific error messages
+4. **Try the alternative workflow** if needed
 
 ## Support
 
-If deployment issues persist:
+If you continue to have issues:
 
-1. Check the [GitHub Actions logs](https://github.com/code-abdulrehman/rcvp/actions)
-2. Review this deployment guide
-3. Check the [VuePress documentation](https://v2.vuepress.vuejs.org/)
-4. Open an issue in the repository
-
-## Quick Commands
-
-```bash
-# Full deployment check
-pnpm run docs:full-check
-
-# Build only
-pnpm run docs:build
-
-# Health check only
-pnpm run docs:health-check
-
-# Development server
-pnpm run docs:dev
-
-# Update dependencies
-./update-deps.sh
-``` 
+1. Check the GitHub Actions logs for specific errors
+2. Verify all repository settings
+3. Try the alternative deployment method
+4. Check GitHub Pages documentation 
