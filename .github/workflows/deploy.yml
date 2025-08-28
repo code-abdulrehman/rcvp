@@ -95,8 +95,8 @@ jobs:
       - name: Build VuePress site
         run: |
           echo "Building VuePress site..."
-          pnpm run docs:build
-          echo "Build completed successfully"
+          pnpm run docs:full-check
+          echo "Full deployment check completed successfully"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
